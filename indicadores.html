@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indicadores financieros · rok.ar</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <p class="volver"><a href="index.html">← Índice</a></p>
+  <header>
+    <h1>ROK.AR</h1>
+    <h2>1. Indicadores financieros</h2>
+  </header>
+
+  <p class="fecha" id="fecha">Cargando…</p>
+
+  <div class="scroll">
+    <table class="datos">
+      <thead>
+        <tr>
+          <th>Indicador</th>
+          <th>Actual</th>
+          <th>Var. vs. día anterior</th>
+          <th>Var. en el año (YTD)</th>
+          <th id="th-media">Media histórica</th>
+          <th>Desvío vs. media</th>
+        </tr>
+      </thead>
+      <tbody id="filas"></tbody>
+    </table>
+  </div>
+
+  <div class="notas" id="notas"></div>
+
+  <footer>
+    <p>La información de este sitio es de carácter informativo y no constituye recomendación de inversión.</p>
+  </footer>
+
+<script>
+(async function () {
+  const nf = (d) => new Intl.NumberFormat("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fechaAR = (iso) => { const [a, m, d] = iso.slice(0, 10).split("-"); return `${d}/${m}/${a}`; };
+
+  function celdaVar(v, unidad) {
+    if (v === null || v === undefined) return '<td class="num">–</td>';
+    const dec = unidad === "pb" ? 0 : (unidad === "pp" ? 1 : 2);
+    const txt = (v > 0 ? "+" : "") + nf(dec).format(v) + (unidad === "%" ? "%" : " " + unidad);
+    const cls = v > 0 ? "pos" : (v < 0 ? "neg" : "");
+    return `<td class="num ${cls}">${txt}</td>`;
+  }
+
+  let data;
+  try {
+    const r = await fetch("data/indicadores.json?t=" + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+  } catch (e) {
+    document.getElementById("fecha").textContent = "Los datos todavía no están disponibles. Volvé a intentar en unos minutos.";
+    return;
+  }
+
+  const anios = data.anios_media;
+  document.getElementById("th-media").textContent = `Media histórica (${anios} años)`;
+
+  const fechas = data.indicadores.filter(i => i.fecha && !i.desactualizado).map(i => i.fecha).sort();
+  const ultima = fechas.length ? fechas[fechas.length - 1] : null;
+  document.getElementById("fecha").textContent = ultima ? `Datos al cierre del ${fechaAR(ultima)}` : "";
+
+  let hayViejos = false;
+  const filas = data.indicadores.map(i => {
+    if (i.valor === null || i.valor === undefined) {
+      hayViejos = true;
+      return `<tr class="viejo"><td>${i.nombre}*</td><td class="num" colspan="5">sin datos</td></tr>`;
+    }
+    const f = nf(i.decimales);
+    const marca = (i.desactualizado || (ultima && i.fecha !== ultima)) ? "*" : "";
+    if (marca) hayViejos = true;
+    const unidad = i.unidad === "%" ? "%" : " " + i.unidad;
+    return `<tr${i.desactualizado ? ' class="viejo"' : ""}>
+      <td>${i.nombre}${marca}</td>
+      <td class="num">${f.format(i.valor)}<span class="unidad">${unidad}</span></td>
+      ${celdaVar(i.var_dia, i.var_dia_unidad)}
+      ${celdaVar(i.ytd, i.ytd_unidad)}
+      <td class="num">${f.format(i.media)}<span class="unidad">${unidad}</span></td>
+      ${celdaVar(i.desvio, i.desvio_unidad)}
+    </tr>`;
+  });
+  document.getElementById("filas").innerHTML = filas.join("");
+
+  const fuentes = [...new Set(data.indicadores.map(i => i.fuente))].join("; ");
+  const viejos = data.indicadores.filter(i => i.fecha && (i.desactualizado || i.fecha !== ultima))
+    .map(i => `${i.nombre}: ${fechaAR(i.fecha)}`).join("; ");
+  document.getElementById("notas").innerHTML = `
+    <p>Media histórica: promedio de los cierres diarios de los últimos ${anios} años (o desde el primer dato disponible).
+       Desvío: diferencia porcentual entre el valor actual y esa media; en la brecha cambiaria, diferencia en puntos porcentuales.</p>
+    <p>Tasas y spreads (Tesoro 10 años, riesgo país, brecha) muestran sus variaciones en puntos básicos (pb) o puntos porcentuales (pp).
+       En índices con tendencia de largo plazo (S&amp;P 500, Nasdaq, oro), el desvío contra la media refleja sobre todo esa tendencia y no indica caro o barato.</p>
+    ${hayViejos ? `<p>* Dato con fecha distinta al resto${viejos ? " (" + viejos + ")" : ""}.</p>` : ""}
+    <p>Fuentes: ${fuentes}. Se actualiza de lunes a viernes después del cierre de Wall Street.
+       Última actualización: ${new Date(data.actualizado).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}.</p>`;
+})();
+</script>
+</body>
+</html>
