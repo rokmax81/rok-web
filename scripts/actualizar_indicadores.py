@@ -59,12 +59,6 @@ def ccl() -> pd.Series:
     return argdatos("/v1/cotizaciones/dolares/contadoconliqui", "venta")
 
 
-def merval_usd() -> pd.Series:
-    merv = yahoo("^MERV")
-    tc = ccl().reindex(merv.index, method="ffill", limit=5)
-    return _limpiar((merv / tc).dropna())
-
-
 def brecha() -> pd.Series:
     oficial = argdatos("/v1/cotizaciones/dolares/oficial", "venta")
     c = ccl()
@@ -91,8 +85,9 @@ INDICADORES = [
          fuente="Yahoo Finance", serie=lambda: yahoo("BZ=F")),
     dict(id="oro", nombre="Oro", unidad="US$/oz", dec=0, modo="precio",
          fuente="Yahoo Finance", serie=lambda: yahoo("GC=F")),
-    dict(id="mervusd", nombre="S&P Merval en dólares (CCL)", unidad="US$", dec=0, modo="precio",
-         fuente="Yahoo Finance / ArgentinaDatos", serie=merval_usd),
+    # La serie del Merval (^MERV) en Yahoo viene cortada; el ETF ARGT cotiza en dólares y tiene historia completa.
+    dict(id="argt", nombre="Acciones argentinas en US$ (ETF ARGT)", unidad="US$", dec=2, modo="precio",
+         fuente="Yahoo Finance", serie=lambda: yahoo("ARGT")),
     dict(id="riesgo", nombre="Riesgo país (EMBI Argentina)", unidad="pb", dec=0, modo="tasa",
          dif_unidad="pb", dif_mult=1, fuente="ArgentinaDatos", serie=lambda: argdatos("/v1/finanzas/indices/riesgo-pais", "valor")),
     dict(id="brecha", nombre="Brecha CCL vs. oficial", unidad="%", dec=1, modo="tasa",
