@@ -1,0 +1,244 @@
+{
+ "actualizado": "2026-11-10T20:26:23Z",
+ "anios_media": 10,
+ "fed": [
+  {
+   "id": "fed_sup",
+   "nombre": "Tasa Fed: rango objetivo (techo)",
+   "fecha": "2026-11-09",
+   "valor": 4.0,
+   "ytd_pb": 25.0,
+   "ytd_pct": 6.666666666666665,
+   "media": 2.6112993224392187,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 138.87006775607813,
+   "desvio_pct": 53.1804479719159,
+   "fuente": "Fed de Nueva York",
+   "desactualizado": false
+  },
+  {
+   "id": "fed_inf",
+   "nombre": "Tasa Fed: rango objetivo (piso)",
+   "fecha": "2026-11-09",
+   "valor": 3.75,
+   "ytd_pb": 25.0,
+   "ytd_pct": 7.14285714285714,
+   "media": 2.3612993224392187,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 138.87006775607813,
+   "desvio_pct": 58.81087011562158,
+   "fuente": "Fed de Nueva York",
+   "desactualizado": false
+  },
+  {
+   "id": "effr",
+   "nombre": "Tasa Fed efectiva (EFFR)",
+   "fecha": "2026-11-09",
+   "valor": 3.88,
+   "ytd_pb": 23.99999999999998,
+   "ytd_pct": 6.593406593406592,
+   "media": 2.4701713830211234,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 140.98286169788764,
+   "desvio_pct": 57.07412152328464,
+   "fuente": "Fed de Nueva York",
+   "desactualizado": false
+  }
+ ],
+ "curva": [
+  {
+   "id": "1m",
+   "nombre": "Bono del Tesoro 1 mes",
+   "fecha": "2026-11-09",
+   "valor": 4.04,
+   "ytd_pb": 29.999999999999982,
+   "ytd_pct": 8.021390374331538,
+   "media": 2.4849559647718173,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 155.50440352281828,
+   "desvio_pct": 62.57833367163814,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "3m",
+   "nombre": "Bono del Tesoro 3 meses",
+   "fecha": "2026-11-09",
+   "valor": 4.24,
+   "ytd_pb": 57.00000000000003,
+   "ytd_pct": 15.531335149863779,
+   "media": 2.554783827061649,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 168.52161729383513,
+   "desvio_pct": 65.96316115233047,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "6m",
+   "nombre": "Bono del Tesoro 6 meses",
+   "fecha": "2026-11-09",
+   "valor": 4.26,
+   "ytd_pb": 67.0,
+   "ytd_pct": 18.66295264623956,
+   "media": 2.606321056845476,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 165.36789431545236,
+   "desvio_pct": 63.44878113965093,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "1a",
+   "nombre": "Bono del Tesoro 1 año",
+   "fecha": "2026-11-09",
+   "valor": 4.38,
+   "ytd_pb": 89.99999999999999,
+   "ytd_pct": 25.86206896551724,
+   "media": 2.6004043234587666,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 177.95956765412333,
+   "desvio_pct": 68.4353452456276,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "2a",
+   "nombre": "Bono del Tesoro 2 años",
+   "fecha": "2026-11-09",
+   "valor": 4.56,
+   "ytd_pb": 108.99999999999994,
+   "ytd_pct": 31.41210374639767,
+   "media": 2.594083266613291,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 196.59167333867086,
+   "desvio_pct": 75.78464263999183,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "5a",
+   "nombre": "Bono del Tesoro 5 años",
+   "fecha": "2026-11-09",
+   "valor": 4.67,
+   "ytd_pb": 94.0,
+   "ytd_pct": 25.201072386058975,
+   "media": 2.6984467574059243,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 197.15532425940756,
+   "desvio_pct": 73.06252151105524,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "10a",
+   "nombre": "Bono del Tesoro 10 años",
+   "fecha": "2026-11-09",
+   "valor": 4.88,
+   "ytd_pb": 70.00000000000001,
+   "ytd_pct": 16.7464114832536,
+   "media": 2.9353963170536432,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 194.46036829463566,
+   "desvio_pct": 66.24671672608152,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "30a",
+   "nombre": "Bono del Tesoro 30 años",
+   "fecha": "2026-11-09",
+   "valor": 5.26,
+   "ytd_pb": 41.99999999999999,
+   "ytd_pct": 8.677685950413228,
+   "media": 3.3354163330664526,
+   "media_desde": "2016-11-10",
+   "desvio_pb": 192.45836669335472,
+   "desvio_pct": 57.70145237503708,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  },
+  {
+   "id": "10a2a",
+   "nombre": "Pendiente 10 años – 2 años",
+   "fecha": "2026-11-09",
+   "valor": 0.3200000000000003,
+   "ytd_pb": -38.99999999999992,
+   "ytd_pct": null,
+   "media": 0.34131305044035226,
+   "media_desde": "2016-11-10",
+   "desvio_pb": -2.131305044035198,
+   "desvio_pct": null,
+   "fuente": "Tesoro de EE.UU.",
+   "desactualizado": false
+  }
+ ],
+ "grafico": {
+  "plazos": [
+   "1 mes",
+   "3 meses",
+   "6 meses",
+   "1 año",
+   "2 años",
+   "3 años",
+   "5 años",
+   "7 años",
+   "10 años",
+   "20 años",
+   "30 años"
+  ],
+  "curvas": [
+   {
+    "id": "hoy",
+    "fecha": "2026-11-09",
+    "valores": [
+     4.04,
+     4.24,
+     4.26,
+     4.38,
+     4.56,
+     4.58,
+     4.67,
+     4.76,
+     4.88,
+     5.29,
+     5.26
+    ]
+   },
+   {
+    "id": "inicio_anio",
+    "fecha": "2025-12-31",
+    "valores": [
+     3.74,
+     3.67,
+     3.59,
+     3.48,
+     3.47,
+     3.55,
+     3.73,
+     3.94,
+     4.18,
+     4.79,
+     4.84
+    ]
+   },
+   {
+    "id": "hace_un_anio",
+    "fecha": "2025-11-07",
+    "valores": [
+     4.01,
+     3.92,
+     3.76,
+     3.63,
+     3.55,
+     3.57,
+     3.67,
+     3.87,
+     4.11,
+     4.68,
+     4.7
+    ]
+   }
+  ]
+ }
+}
