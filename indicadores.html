@@ -50,6 +50,13 @@
     return `<td class="num ${cls}">${txt}</td>`;
   }
 
+  function celdaMedia(i, f, unidad) {
+    if (i.media_tipo !== "pe_fwd") return `<td class="num">${f.format(i.media)}<span class="unidad">${unidad}</span></td>`;
+    if (i.media === null || i.media === undefined) return '<td class="num">n/d<span class="unidad"> P/E fwd</span></td>';
+    const x = nf(1);
+    return `<td class="num">${x.format(i.media)}x<span class="unidad"> P/E fwd</span><br><span class="unidad">hoy ${x.format(i.pe_actual)}x</span></td>`;
+  }
+
   let data;
   try {
     const r = await fetch("data/indicadores.json?t=" + Date.now());
@@ -82,23 +89,26 @@
       <td class="num">${f.format(i.valor)}<span class="unidad">${unidad}</span></td>
       ${celdaVar(i.var_dia, i.var_dia_unidad)}
       ${celdaVar(i.ytd, i.ytd_unidad)}
-      <td class="num">${f.format(i.media)}<span class="unidad">${unidad}</span></td>
+      ${celdaMedia(i, f, unidad)}
       ${celdaVar(i.desvio, i.desvio_unidad)}
     </tr>`;
   });
   document.getElementById("filas").innerHTML = filas.join("");
 
+  const peFuentes = data.indicadores.filter(i => i.pe_fuente).map(i => `${i.nombre}: ${i.pe_fuente}`).join("; ");
   const fuentes = [...new Set(data.indicadores.map(i => i.fuente))].join("; ");
   const viejos = data.indicadores.filter(i => i.fecha && (i.desactualizado || i.fecha !== ultima))
     .map(i => `${i.nombre}: ${fechaAR(i.fecha)}`).join("; ");
   document.getElementById("notas").innerHTML = `
-    <p>Media histórica: promedio de los cierres diarios de los últimos ${anios} años (o desde el primer dato disponible).
-       Desvío: diferencia porcentual entre el valor actual y esa media; en la brecha cambiaria, diferencia en puntos porcentuales.</p>
-    <p>Tasas y spreads (Tesoro 10 años, riesgo país, brecha) muestran sus variaciones en puntos básicos (pb) o puntos porcentuales (pp).
-       En índices con tendencia de largo plazo (S&amp;P 500, Nasdaq, oro), el desvío contra la media refleja sobre todo esa tendencia y no indica caro o barato.</p>
+    <p>Índices de acciones: la media es el P/E forward (precio sobre ganancias estimadas de los próximos 12 meses) promedio de 10 años, y el desvío compara el P/E forward de hoy contra esa media.
+       El P/E de hoy se calcula con el precio del día y la última estimación de ganancias publicada (${peFuentes}).
+       Para el ETF ARGT no hay una fuente confiable de P/E forward histórico.</p>
+    <p>Resto de los indicadores: la media es el promedio de los cierres diarios de los últimos ${anios} años, y el desvío, la diferencia porcentual entre el valor actual y esa media (en la brecha cambiaria, en puntos porcentuales).
+       Tasas y spreads (Tesoro 10 años, riesgo país, brecha) muestran sus variaciones en puntos básicos (pb) o puntos porcentuales (pp).
+       En el oro, el desvío contra la media refleja sobre todo su tendencia de largo plazo y no indica caro o barato.</p>
     ${hayViejos ? `<p>* Dato con fecha distinta al resto${viejos ? " (" + viejos + ")" : ""}.</p>` : ""}
     <p>Fuentes: ${fuentes}. Se actualiza de lunes a viernes después del cierre de Wall Street.
-       Última actualización: ${new Date(data.actualizado).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}.</p>`;
+       Última actualización: ${new Date(data.actualizado).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}</p>`;
 })();
 </script>
 </body>

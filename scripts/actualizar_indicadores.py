@@ -17,6 +17,8 @@ import requests
 
 RAIZ = Path(__file__).resolve().parent.parent
 SALIDA = RAIZ / "data" / "indicadores.json"
+VALUACION = RAIZ / "data" / "valuacion.json"
+EQUITY = {"spx", "ndx", "argt"}  # su media/desvío se miden por P/E forward, no por precio
 ARGDATOS = "https://api.argentinadatos.com"
 ANIOS_MEDIA = 10
 
@@ -73,8 +75,8 @@ def brecha() -> pd.Series:
 INDICADORES = [
     dict(id="spx", nombre="S&P 500", unidad="pts", dec=0, modo="precio",
          fuente="Yahoo Finance", serie=lambda: yahoo("^GSPC")),
-    dict(id="ndx", nombre="Nasdaq Composite", unidad="pts", dec=0, modo="precio",
-         fuente="Yahoo Finance", serie=lambda: yahoo("^IXIC")),
+    dict(id="ndx", nombre="Nasdaq-100", unidad="pts", dec=0, modo="precio",
+         fuente="Yahoo Finance", serie=lambda: yahoo("^NDX")),
     dict(id="vix", nombre="VIX (volatilidad S&P 500)", unidad="pts", dec=2, modo="precio",
          fuente="Yahoo Finance", serie=lambda: yahoo("^VIX")),
     dict(id="ust10", nombre="Tasa Tesoro EE.UU. 10 años", unidad="%", dec=2, modo="tasa",
@@ -131,7 +133,29 @@ def calcular(defn: dict, s: pd.Series) -> dict:
     }
 
 
+def aplicar_pe(fila: dict, s: pd.Series, val: dict | None) -> dict:
+    """Reemplaza media y desvío de precio por P/E forward actual vs. su media histórica."""
+    fila["media_tipo"] = "pe_fwd"
+    if not val:
+        fila.update(media=None, desvio=None, pe_actual=None)
+        return fila
+    if val.get("eps_fwd"):
+        eps = float(val["eps_fwd"])
+    else:
+        ref = pd.Timestamp(val["fecha_ref"])
+        precio_ref = float(s[s.index <= ref].iloc[-1])
+        eps = precio_ref / float(val["pe_ref"])
+    pe = fila["valor"] / eps
+    fila.update(
+        media=float(val["pe_media"]), media_desc=val.get("pe_media_desc", ""),
+        pe_actual=pe, pe_fecha_ref=val["fecha_ref"], pe_fuente=val["fuente"],
+        desvio=(pe / float(val["pe_media"]) - 1) * 100, desvio_unidad="%",
+    )
+    return fila
+
+
 def main() -> int:
+    valuacion = json.loads(VALUACION.read_text()) if VALUACION.exists() else {}
     previos = {}
     if SALIDA.exists():
         try:
@@ -142,7 +166,11 @@ def main() -> int:
     filas, errores = [], 0
     for d in INDICADORES:
         try:
-            filas.append(calcular(d, d["serie"]()))
+            s = d["serie"]()
+            fila = calcular(d, s)
+            if d["id"] in EQUITY:
+                fila = aplicar_pe(fila, s, valuacion.get(d["id"]))
+            filas.append(fila)
             print(f"ok    {d['id']}")
         except Exception as e:  # una fuente caída no tira abajo las demás
             errores += 1

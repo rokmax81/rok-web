@@ -1,0 +1,19 @@
+{
+ "_nota": "P/E forward 12 meses. Actualizar a mano cuando salga un dato nuevo. Si se carga 'eps_fwd' se usa directo; si no, se deduce del precio del índice en 'fecha_ref' dividido 'pe_ref'.",
+ "spx": {
+  "ticker": "^GSPC",
+  "eps_fwd": 415.82,
+  "fecha_ref": "2026-11-05",
+  "pe_media": 19.1,
+  "pe_media_desc": "media 10 años",
+  "fuente": "FactSet Earnings Insight, 06/11/2026"
+ },
+ "ndx": {
+  "ticker": "^NDX",
+  "pe_ref": 23.26,
+  "fecha_ref": "2026-09-30",
+  "pe_media": 22.8,
+  "pe_media_desc": "media 10 años",
+  "fuente": "Siblis Research (P/E fwd al 30/09/2026); media 10 años citada en marzo de 2026"
+ }
+}
