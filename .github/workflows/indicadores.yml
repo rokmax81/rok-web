@@ -35,10 +35,12 @@ jobs:
       - name: Indicadores (sección 1)
         run: python scripts/actualizar_indicadores.py
         continue-on-error: true
+        timeout-minutes: 5
 
       - name: Tasas de EE.UU. (sección 2)
         run: python scripts/actualizar_tasas.py
         continue-on-error: true
+        timeout-minutes: 5
 
       - name: Guardar cambios
         run: |

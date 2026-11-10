@@ -1,4 +1,9 @@
-"""Descarga tasas de EE.UU. desde FRED (Reserva Federal de St. Louis) y escribe data/tasas.json."""
+"""Descarga tasas de EE.UU. y escribe data/tasas.json.
+
+Fuentes primarias (FRED no responde desde los servidores de GitHub):
+- Curva: Departamento del Tesoro de EE.UU., "Daily Treasury Par Yield Curve Rates" (un CSV por año).
+- Tasa Fed: Fed de Nueva York, API de tasas de referencia (EFFR y rango objetivo).
+"""
 
 from __future__ import annotations
 
@@ -36,17 +41,58 @@ CURVA = [  # (id, plazo, serie FRED, en_tabla)
 ]
 
 _sesion = requests.Session()
-_sesion.headers["User-Agent"] = "rok.ar (indicadores personales)"
+_sesion.headers["User-Agent"] = "Mozilla/5.0 (rok.ar; indicadores personales)"
+TIMEOUT = (10, 40)
+
+# Columnas del CSV del Tesoro para cada serie
+TESORO_COL = {"DGS1MO": "1 Mo", "DGS3MO": "3 Mo", "DGS6MO": "6 Mo", "DGS1": "1 Yr", "DGS2": "2 Yr", "DGS3": "3 Yr",
+              "DGS5": "5 Yr", "DGS7": "7 Yr", "DGS10": "10 Yr", "DGS20": "20 Yr", "DGS30": "30 Yr"}
+_tesoro: pd.DataFrame | None = None
+_nyfed: pd.DataFrame | None = None
+
+
+def _tabla_tesoro() -> pd.DataFrame:
+    global _tesoro
+    if _tesoro is None:
+        partes = []
+        hoy = pd.Timestamp.today()
+        for anio in range(hoy.year - ANIOS_MEDIA - 1, hoy.year + 1):
+            url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
+                   f"daily-treasury-rates.csv/{anio}/all?type=daily_treasury_yield_curve"
+                   f"&field_tdr_date_value={anio}&page&_format=csv")
+            r = _sesion.get(url, timeout=TIMEOUT)
+            r.raise_for_status()
+            df = pd.read_csv(io.StringIO(r.text))
+            df.index = pd.to_datetime(df.pop("Date"), format="%m/%d/%Y")
+            partes.append(df)
+            print(f"ok    Tesoro {anio} ({len(df)} filas)")
+        _tesoro = pd.concat(partes).sort_index()
+    return _tesoro
+
+
+def _tabla_nyfed() -> pd.DataFrame:
+    global _nyfed
+    if _nyfed is None:
+        hasta = pd.Timestamp.today().strftime("%Y-%m-%d")
+        url = f"https://markets.newyorkfed.org/api/rates/unsecured/effr/search.json?startDate={DESDE}&endDate={hasta}"
+        r = _sesion.get(url, timeout=TIMEOUT)
+        r.raise_for_status()
+        df = pd.DataFrame(r.json()["refRates"])
+        df.index = pd.to_datetime(df["effectiveDate"])
+        _nyfed = df.sort_index()
+        print(f"ok    NY Fed EFFR ({len(df)} filas)")
+    return _nyfed
 
 
 def fred(serie: str) -> pd.Series:
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={serie}&cosd={DESDE}"
-    r = _sesion.get(url, timeout=60)
-    r.raise_for_status()
-    df = pd.read_csv(io.StringIO(r.text))
-    s = pd.to_numeric(df.iloc[:, 1], errors="coerce")
-    s.index = pd.to_datetime(df.iloc[:, 0])
-    s = s.dropna().sort_index()
+    """Devuelve la serie con el código de FRED, pero tomada de la fuente primaria."""
+    if serie in TESORO_COL:
+        s = _tabla_tesoro()[TESORO_COL[serie]]
+    else:
+        col = {"DFF": "percentRate", "DFEDTARU": "targetRateTo", "DFEDTARL": "targetRateFrom"}[serie]
+        s = _tabla_nyfed()[col]
+    s = pd.to_numeric(s, errors="coerce").dropna().sort_index()
+    s = s[~s.index.duplicated(keep="last")]
     if len(s) < 30:
         raise ValueError(f"{serie}: serie demasiado corta")
     return s
@@ -85,7 +131,7 @@ def main() -> int:
             s = fred(serie)
             series[id_] = s
             print(f"ok    {serie}")
-            return metricas(id_, nombre, s, f"FRED ({serie})")
+            return metricas(id_, nombre, s, "Fed de Nueva York" if serie in ("DFF", "DFEDTARU", "DFEDTARL") else "Tesoro de EE.UU.")
         except Exception as e:
             errores += 1
             print(f"ERROR {serie}: {e}", file=sys.stderr)
@@ -103,7 +149,7 @@ def main() -> int:
     if "10a" in series and "2a" in series:
         df = pd.concat([series["10a"], series["2a"]], axis=1, keys=["l", "c"]).dropna()
         pend = df["l"] - df["c"]
-        f = metricas("10a2a", "Pendiente 10 años – 2 años", pend, "FRED (DGS10 − DGS2)")
+        f = metricas("10a2a", "Pendiente 10 años – 2 años", pend, "Tesoro de EE.UU.")
         f["ytd_pct"] = None
         f["desvio_pct"] = None  # % de un spread que cruza el cero no tiene sentido
         curva.append(f)
