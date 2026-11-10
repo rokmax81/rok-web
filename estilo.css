@@ -20,6 +20,8 @@ table.indice { margin: 0 auto; border-collapse: collapse; }
 table.indice td { padding: 5px 24px; font-size: 14pt; }
 
 .volver { font-size: 11pt; }
+h3 { font-size: 14pt; font-weight: bold; margin: 26px 0 8px; }
+.leyenda { text-align: center; font-size: 11pt; margin: 6px 0 0; }
 .fecha { text-align: center; font-size: 11pt; margin: 0 0 18px; }
 
 .scroll { overflow-x: auto; }

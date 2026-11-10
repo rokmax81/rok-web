@@ -45,7 +45,8 @@
   function celdaVar(v, unidad) {
     if (v === null || v === undefined) return '<td class="num">–</td>';
     const dec = unidad === "pb" ? 0 : (unidad === "pp" ? 1 : 2);
-    const txt = (v > 0 ? "+" : "") + nf(dec).format(v) + (unidad === "%" ? "%" : " " + unidad);
+    const r = Number(v.toFixed(dec)) || 0;
+    const txt = (r > 0 ? "+" : "") + nf(dec).format(r) + (unidad === "%" ? "%" : " " + unidad);
     const cls = v > 0 ? "pos" : (v < 0 ? "neg" : "");
     return `<td class="num ${cls}">${txt}</td>`;
   }

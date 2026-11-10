@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tasas de EE.UU. · rok.ar</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <p class="volver"><a href="index.html">← Índice</a></p>
+  <header>
+    <h1>ROK.AR</h1>
+    <h2>2. Tasas de EE.UU.</h2>
+  </header>
+
+  <p class="fecha" id="fecha">Cargando…</p>
+
+  <h3>a. Tasa de la Reserva Federal</h3>
+  <div class="scroll"><table class="datos"><thead id="cab-a"></thead><tbody id="filas-a"></tbody></table></div>
+
+  <h3>b. Curva de bonos del Tesoro</h3>
+  <div class="scroll"><table class="datos"><thead id="cab-b"></thead><tbody id="filas-b"></tbody></table></div>
+
+  <h3>c. Gráfico de la curva</h3>
+  <div id="grafico"></div>
+
+  <div class="notas" id="notas"></div>
+
+  <footer>
+    <p>La información de este sitio es de carácter informativo y no constituye recomendación de inversión.</p>
+  </footer>
+
+<script>
+(async function () {
+  const nf = (d) => new Intl.NumberFormat("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fechaAR = (iso) => { const [a, m, d] = iso.slice(0, 10).split("-"); return `${d}/${m}/${a}`; };
+  const signo = (v, dec, suf) => { const r = Number(v.toFixed(dec)); return (r > 0 ? "+" : "") + nf(dec).format(r === 0 ? 0 : r) + suf; };
+  const cls = (v) => v > 0 ? "pos" : (v < 0 ? "neg" : "");
+
+  let data;
+  try {
+    const r = await fetch("data/tasas.json?t=" + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+  } catch (e) {
+    document.getElementById("fecha").textContent = "Los datos todavía no están disponibles. Volvé a intentar en unos minutos.";
+    return;
+  }
+  const anios = data.anios_media;
+
+  const cabecera = (primera) => `<tr>
+    <th>${primera}</th><th>Tasa actual</th><th>Var. en el año (pb)</th><th>Var. en el año (%)</th>
+    <th>Media histórica (${anios} años)</th><th>Desvío vs. media</th></tr>`;
+  document.getElementById("cab-a").innerHTML = cabecera("Tasa");
+  document.getElementById("cab-b").innerHTML = cabecera("Plazo");
+
+  const pct = (v) => nf(2).format(v) + "%";
+  function fila(f, nombre, valorTxt) {
+    if (f.valor === null || f.valor === undefined)
+      return `<tr class="viejo"><td>${nombre}*</td><td class="num" colspan="5">sin datos</td></tr>`;
+    const td = (v, txt) => v === null || v === undefined ? '<td class="num">–</td>' : `<td class="num ${cls(v)}">${txt}</td>`;
+    const desvio = `<td class="num ${cls(f.desvio_pb)}">${signo(f.desvio_pb, 0, " pb")}${
+      f.desvio_pct !== null && f.desvio_pct !== undefined ? `<br><span class="unidad">${signo(f.desvio_pct, 1, "%")}</span>` : ""}</td>`;
+    return `<tr${f.desactualizado ? ' class="viejo"' : ""}>
+      <td>${nombre}${f.desactualizado ? "*" : ""}</td>
+      <td class="num">${valorTxt || pct(f.valor)}</td>
+      ${td(f.ytd_pb, f.ytd_pb !== null ? signo(f.ytd_pb, 0, " pb") : "")}
+      ${td(f.ytd_pct, f.ytd_pct !== null && f.ytd_pct !== undefined ? signo(f.ytd_pct, 1, "%") : "")}
+      <td class="num">${pct(f.media)}</td>
+      ${desvio}
+    </tr>`;
+  }
+
+  // a. Fed: el rango objetivo va en una sola fila (estadísticas sobre el techo)
+  const fed = Object.fromEntries(data.fed.map(f => [f.id, f]));
+  const rango = fed.fed_sup && fed.fed_inf && fed.fed_sup.valor !== null && fed.fed_inf.valor !== null
+    ? `${nf(2).format(fed.fed_inf.valor)}–${pct(fed.fed_sup.valor)}` : null;
+  document.getElementById("filas-a").innerHTML =
+    fila(fed.fed_sup, "Rango objetivo de la Fed", rango) + fila(fed.effr, "Tasa efectiva (EFFR)");
+
+  // b. Curva
+  document.getElementById("filas-b").innerHTML = data.curva.map(f =>
+    f.id === "10a2a"
+      ? fila(f, f.nombre, (f.valor > 0 ? "+" : "") + nf(0).format(f.valor * 100) + " pb")
+      : fila(f, f.nombre.replace("Bono del Tesoro ", ""))
+  ).join("");
+  // la media de la pendiente también va en pb
+  const filasB = document.getElementById("filas-b").rows;
+  const pend = data.curva.find(f => f.id === "10a2a");
+  if (pend && pend.media !== undefined) filasB[filasB.length - 1].cells[4].textContent = (pend.media > 0 ? "+" : "") + nf(0).format(pend.media * 100) + " pb";
+
+  const fechas = [...data.fed, ...data.curva].filter(f => f.fecha && !f.desactualizado).map(f => f.fecha).sort();
+  if (fechas.length) document.getElementById("fecha").textContent = `Datos al ${fechaAR(fechas[fechas.length - 1])}`;
+
+  // c. Gráfico (SVG simple)
+  const g = data.grafico;
+  if (g) {
+    const W = 780, H = 360, m = { l: 52, r: 18, t: 16, b: 46 };
+    const todos = g.curvas.flatMap(c => c.valores).filter(v => v !== null);
+    const yMin = Math.floor((Math.min(...todos) - 0.1) * 4) / 4, yMax = Math.ceil((Math.max(...todos) + 0.1) * 4) / 4;
+    const x = (i) => m.l + i * (W - m.l - m.r) / (g.plazos.length - 1);
+    const y = (v) => m.t + (yMax - v) * (H - m.t - m.b) / (yMax - yMin);
+    const estilos = {
+      hoy: { color: "#000", ancho: 2.2, guion: "", nombre: "Hoy" },
+      inicio_anio: { color: "#0000ee", ancho: 1.6, guion: "6 4", nombre: "Cierre del año anterior" },
+      hace_un_anio: { color: "#888", ancho: 1.6, guion: "2 3", nombre: "Hace un año" },
+    };
+    let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto;font-family:'Times New Roman',serif">`;
+    const paso = (yMax - yMin) > 2 ? 0.5 : 0.25;
+    for (let v = yMin; v <= yMax + 1e-9; v += paso) {
+      svg += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="#ddd"/>`;
+      svg += `<text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="12">${nf(2).format(v)}%</text>`;
+    }
+    g.plazos.forEach((p, i) => svg += `<text x="${x(i)}" y="${H - m.b + 18}" text-anchor="middle" font-size="12">${p.replace(" meses", "m").replace(" mes", "m").replace(" años", "a").replace(" año", "a")}</text>`);
+    svg += `<text x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle" font-size="12">Plazo</text>`;
+    svg += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="#000"/><line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H - m.b}" stroke="#000"/>`;
+    [...g.curvas].reverse().forEach(c => {
+      const e = estilos[c.id];
+      const pts = c.valores.map((v, i) => v === null ? null : `${x(i)},${y(v)}`).filter(Boolean).join(" ");
+      svg += `<polyline points="${pts}" fill="none" stroke="${e.color}" stroke-width="${e.ancho}" stroke-dasharray="${e.guion}"/>`;
+      if (c.id === "hoy") c.valores.forEach((v, i) => { if (v !== null) svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="#000"/>`; });
+    });
+    svg += "</svg>";
+    const ley = g.curvas.map(c => {
+      const e = estilos[c.id];
+      return `<span style="white-space:nowrap;margin:0 10px"><svg width="28" height="10"><line x1="0" x2="28" y1="5" y2="5" stroke="${e.color}" stroke-width="${e.ancho}" stroke-dasharray="${e.guion}"/></svg> ${e.nombre} (${fechaAR(c.fecha)})</span>`;
+    }).join("");
+    document.getElementById("grafico").innerHTML = svg + `<p class="leyenda">${ley}</p>`;
+  }
+
+  document.getElementById("notas").innerHTML = `
+    <p>Variación en el año: contra el último dato del año anterior, en puntos básicos (pb; 100 pb = 1 punto porcentual) y en % sobre la tasa de entonces.
+       Media histórica: promedio de los datos diarios de los últimos ${anios} años. Desvío: diferencia contra esa media en pb (abajo, en %).</p>
+    <p>Rango objetivo de la Fed: las estadísticas se calculan sobre el techo del rango. En la pendiente 10 años – 2 años no se muestra variación en %, porque el spread puede pasar por cero.</p>
+    <p>Fuente: FRED, Reserva Federal de St. Louis (rendimientos de bonos del Tesoro a plazo constante y tasas de la Fed). Se actualiza de lunes a viernes; FRED publica con un día hábil de demora.
+       Última actualización: ${new Date(data.actualizado).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}</p>`;
+})();
+</script>
+</body>
+</html>
