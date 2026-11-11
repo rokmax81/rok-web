@@ -2,8 +2,11 @@ name: Actualizar indicadores
 
 on:
   schedule:
-    # Lunes a viernes 21:40 UTC (18:40 Buenos Aires), después del cierre de Wall Street.
-    - cron: "40 21 * * 1-5"
+    # Lunes a viernes 19:00 hora de Nueva York (ET). GitHub solo acepta UTC, así que
+    # hay dos horarios: 23:00 UTC (horario de verano, EDT) y 00:00 UTC del día
+    # siguiente (horario estándar, EST). El job "hora" deja correr solo el que corresponde.
+    - cron: "0 23 * * 1-5"
+    - cron: "0 0 * * 2-6"
   workflow_dispatch:
   push:
     branches: [main]
@@ -19,7 +22,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  hora:
+    runs-on: ubuntu-latest
+    outputs:
+      correr: ${{ steps.chequeo.outputs.correr }}
+    steps:
+      - id: chequeo
+        env:
+          EVENTO: ${{ github.event_name }}
+          HORARIO: ${{ github.event.schedule }}
+        run: |
+          correr=true
+          if [ "$EVENTO" = "schedule" ]; then
+            zona=$(TZ=America/New_York date +%Z)
+            if [ "$zona" = "EDT" ] && [ "$HORARIO" != "0 23 * * 1-5" ]; then correr=false; fi
+            if [ "$zona" = "EST" ] && [ "$HORARIO" != "0 0 * * 2-6" ]; then correr=false; fi
+            echo "Zona: $zona, horario: $HORARIO, corre: $correr"
+          fi
+          echo "correr=$correr" >> "$GITHUB_OUTPUT"
+
   actualizar:
+    needs: hora
+    if: needs.hora.outputs.correr == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
