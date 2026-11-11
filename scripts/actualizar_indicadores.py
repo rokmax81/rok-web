@@ -20,7 +20,7 @@ SALIDA = RAIZ / "data" / "indicadores.json"
 VALUACION = RAIZ / "data" / "valuacion.json"
 EQUITY = {"spx", "ndx", "argt"}  # su media/desvío se miden por P/E forward, no por precio
 ARGDATOS = "https://api.argentinadatos.com"
-ANIOS_MEDIA = 10
+ANIOS_MEDIA = 50
 
 
 # ---------- Fuentes ----------
@@ -28,7 +28,7 @@ ANIOS_MEDIA = 10
 def yahoo(ticker: str) -> pd.Series:
     import yfinance as yf
 
-    hist = yf.Ticker(ticker).history(period=f"{ANIOS_MEDIA + 1}y", interval="1d", auto_adjust=False)
+    hist = yf.Ticker(ticker).history(period="max", interval="1d", auto_adjust=False)
     s = hist["Close"].dropna()
     s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
     return _limpiar(s)

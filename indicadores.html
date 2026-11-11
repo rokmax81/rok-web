@@ -52,7 +52,10 @@
   }
 
   function celdaMedia(i, f, unidad) {
-    if (i.media_tipo !== "pe_fwd") return `<td class="num">${f.format(i.media)}<span class="unidad">${unidad}</span></td>`;
+    if (i.media_tipo !== "pe_fwd") {
+      const corta = i.media_desde && i.fecha && (Number(i.fecha.slice(0, 4)) - Number(i.media_desde.slice(0, 4))) < anios - 1;
+      return `<td class="num">${f.format(i.media)}<span class="unidad">${unidad}</span>${corta ? `<br><span class="unidad">desde ${i.media_desde.slice(0, 4)}</span>` : ""}</td>`;
+    }
     if (i.media === null || i.media === undefined) return '<td class="num">n/d<span class="unidad"> P/E fwd</span></td>';
     const x = nf(1);
     return `<td class="num">${x.format(i.media)}x<span class="unidad"> P/E fwd</span><br><span class="unidad">hoy ${x.format(i.pe_actual)}x</span></td>`;
@@ -104,7 +107,7 @@
     <p>Índices de acciones: la media es el P/E forward (precio sobre ganancias estimadas de los próximos 12 meses) promedio de 10 años, y el desvío compara el P/E forward de hoy contra esa media.
        El P/E de hoy se calcula con el precio del día y la última estimación de ganancias publicada (${peFuentes}).
        Para el ETF ARGT no hay una fuente confiable de P/E forward histórico.</p>
-    <p>Resto de los indicadores: la media es el promedio de los cierres diarios de los últimos ${anios} años, y el desvío, la diferencia porcentual entre el valor actual y esa media (en la brecha cambiaria, en puntos porcentuales).
+    <p>Resto de los indicadores: la media es el promedio de los cierres diarios de los últimos ${anios} años (si la serie es más corta, desde el primer dato disponible, indicado debajo de la media), y el desvío, la diferencia porcentual entre el valor actual y esa media (en la brecha cambiaria, en puntos porcentuales).
        Tasas y spreads (Tesoro 10 años, riesgo país, brecha) muestran sus variaciones en puntos básicos (pb) o puntos porcentuales (pp).
        En el oro, el desvío contra la media refleja sobre todo su tendencia de largo plazo y no indica caro o barato.</p>
     ${hayViejos ? `<p>* Dato con fecha distinta al resto${viejos ? " (" + viejos + ")" : ""}.</p>` : ""}
