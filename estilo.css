@@ -44,3 +44,13 @@ footer { margin-top: 36px; text-align: center; font-size: 10pt; }
   table.datos { font-size: 10.5pt; }
   table.datos th, table.datos td { padding: 3px 5px; }
 }
+
+/* Guía de episodios */
+table.indice td.anio { font-size: 11pt; color: #444; padding-left: 0; }
+ol.episodios { list-style: none; padding: 0; margin: 0; }
+ol.episodios li { border-top: 1px solid #ccc; padding: 10px 0; }
+ol.episodios li:last-child { border-bottom: 1px solid #ccc; }
+.ep-titulo { font-weight: bold; margin: 0 0 3px; }
+.ep-num { display: inline-block; min-width: 1.6em; }
+.ep-sinopsis { margin: 0; }
+.nav-temp { text-align: center; font-size: 11pt; margin-top: 18px; }
